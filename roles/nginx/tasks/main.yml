@@ -6,6 +6,16 @@
     state: present
   become: yes
 
+- name: Obtain Let's Encrypt certificate
+  command: >
+    certbot certonly --nginx -n --agree-tos
+    --email admin@example.com
+    -d example.com -d www.example.com
+  become: yes
+  args:
+    creates: /etc/letsencrypt/live/lastdance.com/fullchain.pem
+
+
 - name: Ensure Nginx is running
   service:
     name: nginx
