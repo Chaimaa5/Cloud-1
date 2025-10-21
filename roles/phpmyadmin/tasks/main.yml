@@ -1,0 +1,7 @@
+---
+# Tasks for phpMyAdmin installation and setup
+- name: Install phpMyAdmin
+  apt:
+    name: phpmyadmin
+    state: present
+  become: yes

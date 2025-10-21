@@ -1,0 +1,14 @@
+---
+# Tasks for MySQL installation and setup
+- name: Install MySQL server
+  apt:
+    name: mysql-server
+    state: present
+  become: yes
+
+- name: Ensure MySQL is running
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+  become: yes
