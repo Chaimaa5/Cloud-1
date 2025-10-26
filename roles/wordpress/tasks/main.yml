@@ -11,3 +11,23 @@
     dest: /var/www/html/
     remote_src: yes
   become: yes
+
+- name: Install WP-CLI
+  get_url:
+    url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    dest: /usr/local/bin/wp
+    mode: '0755'
+  become: yes
+
+- name: Configure wp-config.php
+  template:
+    src: wp-config.php.j2
+    dest: /var/www/html/wordpress/wp-config.php
+  become: yes
+
+- name: Create WordPress admin user
+  command: >
+    wp user create {{ wp_admin_user }} {{ wp_admin_email }} --role=administrator --user_pass={{ wp_admin_password }} --path=/var/www/html/wordpress
+  args:
+    creates: /var/www/html/wordpress/wp-content
+  become: yes
