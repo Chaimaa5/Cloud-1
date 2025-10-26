@@ -1,0 +1,40 @@
+---
+# Configure UFW firewall
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+  become: yes
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    name: OpenSSH
+  become: yes
+
+- name: Allow HTTP
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+  become: yes
+
+- name: Allow HTTPS
+  ufw:
+    rule: allow
+    port: 443
+    proto: tcp
+  become: yes
+
+- name: Deny MySQL from public
+  ufw:
+    rule: deny
+    port: 3306
+    proto: tcp
+  become: yes
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+    policy: deny
+  become: yes
