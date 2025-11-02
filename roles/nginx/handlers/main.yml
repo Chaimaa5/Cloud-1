@@ -1,6 +1,4 @@
 ---
-- name: Reload Nginx
-  service:
-    name: nginx
-    state: reloaded
-  become: yes
+- name: restart nginx
+  shell: docker restart nginx
+  ignore_errors: yes

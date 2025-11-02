@@ -1,37 +1,99 @@
 ---
-# Tasks for Docker installation and setup
-- name: Install required system packages
+# Docker Installation Role
+- name: Wait for system to be ready
+  wait_for_connection:
+    timeout: 60
+    delay: 5
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  retries: 3
+  delay: 10
+  register: apt_update
+  until: apt_update is success
+
+- name: Install required packages
   apt:
     name:
       - apt-transport-https
       - ca-certificates
       - curl
-      - software-properties-common
+      - gnupg
+      - lsb-release
+      - python3-pip
     state: present
-  become: yes
+  retries: 3
+  delay: 10
+  register: apt_install
+  until: apt_install is success
+
+- name: Check if Docker is installed
+  command: docker --version
+  register: docker_installed
+  ignore_errors: yes
+  changed_when: false
+
+- name: Display Docker status
+  debug:
+    msg: "Docker is {{ 'already installed' if docker_installed.rc == 0 else 'not installed' }}"
 
 - name: Add Docker GPG key
   apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
-  become: yes
+  when: docker_installed.rc != 0
 
 - name: Add Docker repository
   apt_repository:
-    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
     state: present
-  become: yes
+  when: docker_installed.rc != 0
 
 - name: Install Docker
   apt:
-    name: docker-ce
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
     state: present
     update_cache: yes
-  become: yes
+  when: docker_installed.rc != 0
 
-- name: Ensure Docker is running
-  service:
+- name: Check if Docker Compose is installed
+  command: docker-compose --version
+  register: compose_installed
+  ignore_errors: yes
+  changed_when: false
+
+- name: Display Docker Compose status
+  debug:
+    msg: "Docker Compose is {{ 'already installed' if compose_installed.rc == 0 else 'not installed' }}"
+
+- name: Install Docker Compose
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-linux-x86_64"
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+  when: compose_installed.rc != 0
+
+- name: Check if Docker Python library is installed
+  command: python3 -c "import docker"
+  register: docker_py_installed
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install Docker Python library
+  pip:
+    name: 
+      - docker
+      - docker-compose
+    state: present
+  when: docker_py_installed.rc != 0
+
+- name: Ensure Docker service is started and enabled
+  systemd:
     name: docker
     state: started
     enabled: yes
-  become: yes

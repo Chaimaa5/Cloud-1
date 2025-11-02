@@ -1,0 +1,23 @@
+---
+- name: Deploy WordPress Infrastructure on AWS
+  hosts: wordpress_servers
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    domain_name: "{{ lookup('env', 'DOMAIN_NAME') | default('localhost', true) }}"
+    mysql_root_password: "{{ lookup('env', 'MYSQL_ROOT_PASSWORD') | default('secure_root_pass_123', true) }}"
+    mysql_database: "wordpress"
+    mysql_user: "wpuser"
+    mysql_password: "{{ lookup('env', 'MYSQL_PASSWORD') | default('secure_wp_pass_123', true) }}"
+    wordpress_admin_user: "admin"
+    wordpress_admin_password: "{{ lookup('env', 'WP_ADMIN_PASSWORD') | default('admin_pass_123', true) }}"
+    wordpress_admin_email: "{{ lookup('env', 'WP_ADMIN_EMAIL') | default('admin@example.com', true) }}"
+    
+  roles:
+    # - docker
+    # - mysql
+    - nginx
+    # - phpmyadmin
+    - wordpress
+    # - firewall

@@ -1,0 +1,74 @@
+version: '3.8'          
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: myrootpassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: wppassword
+    volumes:
+      - /opt/wordpress/mysql:/var/lib/mysql
+    networks:
+      - wordpress_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p{{ mysql_root_password }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  wordpress:
+    image: wordpress:php8.1-fpm
+    container_name: wordpress
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_NAME: mysql_database
+      WORDPRESS_DB_USER: mysql_user
+      WORDPRESS_DB_PASSWORD: mysql_password
+    volumes:
+      - /opt/wordpress/wordpress:/var/www/html
+    networks:
+      - wordpress_network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD:  mysql_root_password 
+    networks:
+      - wordpress_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: always
+    depends_on:
+      - wordpress
+      - phpmyadmin
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /opt/wordpress/wordpress:/var/www/html
+      - /opt/wordpress/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /opt/wordpress/certs:/etc/nginx/certs:ro
+    networks:
+      - wordpress_network
+
+networks:
+  wordpress_network:
+    driver: bridge
+volumes:
+  mysql_data:
+  wordpress_data:

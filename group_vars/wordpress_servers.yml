@@ -1,0 +1,30 @@
+# Group variables for WordPress servers
+---
+# Domain Configuration
+domain_name: "{{ lookup('env', 'DOMAIN_NAME') | default('localhost', true) }}"
+
+# MariaDB Configuration
+mysql_root_password: "{{ lookup('env', 'MYSQL_ROOT_PASSWORD') | default('secure_root_pass_123', true) }}"
+mysql_database: "wordpress"
+mysql_user: "wpuser"
+mysql_password: "{{ lookup('env', 'MYSQL_PASSWORD') | default('secure_wp_pass_123', true) }}"
+
+# WordPress Configuration
+wordpress_admin_user: "admin"
+wordpress_admin_password: "{{ lookup('env', 'WP_ADMIN_PASSWORD') | default('admin_pass_123', true) }}"
+wordpress_admin_email: "{{ lookup('env', 'WP_ADMIN_EMAIL') | default('admin@example.com', true) }}"
+
+# Application Paths
+app_base_dir: "/opt/wordpress"
+app_nginx_dir: "{{ app_base_dir }}/nginx"
+app_mysql_dir: "{{ app_base_dir }}/mysql"
+app_wordpress_dir: "{{ app_base_dir }}/wordpress"
+app_certs_dir: "{{ app_base_dir }}/certs"
+app_mysql_init_dir: "{{ app_base_dir }}/mysql-init"
+
+# Docker Configuration
+docker_compose_version: "2.20.0"
+mariadb_version: "10.11"
+wordpress_version: "php8.1-fpm"
+nginx_version: "alpine"
+phpmyadmin_version: "latest"

@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mariadb:{{ mariadb_version }}
+    container_name: mysql
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: {{ mysql_root_password }}
+      MARIADB_DATABASE: {{ mysql_database }}
+      MARIADB_USER: {{ mysql_user }}
+      MARIADB_PASSWORD: {{ mysql_password }}
+    volumes:
+      - {{ app_mysql_dir }}:/var/lib/mysql
+      - {{ app_mysql_init_dir }}:/docker-entrypoint-initdb.d
+    networks:
+      - wordpress_network
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  wordpress:
+    image: wordpress:{{ wordpress_version }}
+    container_name: wordpress
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_NAME: {{ mysql_database }}
+      WORDPRESS_DB_USER: {{ mysql_user }}
+      WORDPRESS_DB_PASSWORD: {{ mysql_password }}
+    volumes:
+      - {{ app_wordpress_dir }}:/var/www/html
+    networks:
+      - wordpress_network
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm-healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  phpmyadmin:
+    image: phpmyadmin:{{ phpmyadmin_version }}
+    container_name: phpmyadmin
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: {{ mysql_root_password }}
+    networks:
+      - wordpress_network
+
+  nginx:
+    image: nginx:{{ nginx_version }}
+    container_name: nginx
+    restart: always
+    depends_on:
+      - wordpress
+      - phpmyadmin
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - {{ app_wordpress_dir }}:/var/www/html
+      - {{ app_nginx_dir }}/nginx.conf:/etc/nginx/nginx.conf:ro
+      - {{ app_certs_dir }}:/etc/nginx/certs:ro
+    networks:
+      - wordpress_network
+
+networks:
+  wordpress_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  wordpress_data:

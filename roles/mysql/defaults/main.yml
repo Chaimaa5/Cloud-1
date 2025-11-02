@@ -1,0 +1,5 @@
+mariadb_version: "10.11"
+mysql_root_password: "secure_root_pass_123"
+mysql_database: "wordpress"
+mysql_user: "wpuser"
+mysql_password: "secure_wp_pass_123"

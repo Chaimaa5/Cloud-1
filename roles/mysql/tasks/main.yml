@@ -1,32 +1,59 @@
 ---
-# Tasks for MySQL installation and setup
-- name: Install MySQL server
-  apt:
-    name: mysql-server
-    state: present
-  become: yes
+# Database (MariaDB) Setup Role
+- name: Create application directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ app_base_dir }}"
+    - "{{ app_mysql_dir }}"
+    - "{{ app_mysql_init_dir }}"
 
-- name: Ensure MySQL is running
-  service:
-    name: mysql
-    state: started
-    enabled: yes
-  become: yes
+- name: Check if docker-compose.yml exists
+  stat:
+    path: "{{ app_base_dir }}/docker-compose.yml"
+  register: compose_file
 
-- name: Create WordPress database
-  mysql_db:
-    name: "{{ wordpress_db_name }}"
-    state: present
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-  become: yes
+- name: Stop and remove existing containers and volumes
+  shell: docker-compose down -v --remove-orphans
+  args:
+    chdir: "{{ app_base_dir }}"
+  when: compose_file.stat.exists
+  ignore_errors: yes
 
-- name: Create WordPress database user
-  mysql_user:
-    name: "{{ wordpress_db_user }}"
-    password: "{{ wordpress_db_password }}"
-    priv: "{{ wordpress_db_name }}.*:ALL"
-    state: present
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-  become: yes
+- name: Remove existing Docker volumes
+  shell: |
+    docker volume ls -q --filter name=wordpress | xargs -r docker volume rm 2>/dev/null || true
+  ignore_errors: yes
+
+- name: Stop any orphaned MySQL containers
+  shell: |
+    docker ps -a --filter "name=mysql" -q | xargs -r docker rm -f 2>/dev/null || true
+  ignore_errors: yes
+
+- name: Clean up existing database data
+  shell: rm -rf {{ app_mysql_dir }}/*
+  ignore_errors: yes
+
+- name: Verify directory is empty
+  shell: "echo 'MySQL dir: $(ls -A {{ app_mysql_dir }} 2>/dev/null | wc -l) files'"
+  register: cleanup_status
+  
+- name: Display cleanup status
+  debug:
+    var: cleanup_status.stdout_lines
+
+- name: Display database configuration
+  debug:
+    msg:
+      - "MariaDB Root Password: {{ mysql_root_password }}"
+      - "Database: {{ mysql_database }}"
+      - "User: {{ mysql_user }}"
+      - "User Password: {{ mysql_password }}"
+
+- name: Create MySQL initialization script
+  template:
+    src: init.sql.j2
+    dest: "{{ app_mysql_init_dir }}/init.sql"
+    mode: '0644'

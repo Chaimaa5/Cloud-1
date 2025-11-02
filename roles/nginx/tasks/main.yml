@@ -1,31 +1,78 @@
+# ---
+# # Tasks for Nginx installation and setup
+# - name: Install Nginx
+#   apt:
+#     name: nginx
+#     state: present
+#   become: yes
+
+# - name: Obtain Let's Encrypt certificate
+#   command: >
+#     certbot certonly --nginx -n --agree-tos
+#     --email admin@example.com
+#     -d example.com -d www.example.com
+#   become: yes
+#   args:
+#     creates: /etc/letsencrypt/live/lastdance.com/fullchain.pem
+
+
+# - name: Ensure Nginx is running
+#   service:
+#     name: nginx
+#     state: started
+#     enabled: yes
+#   become: yes
+
+# - name: Deploy custom Nginx config for domain
+#   template:
+#     src: default.conf.j2
+#     dest: /etc/nginx/sites-available/default
+#   notify: Reload Nginx
+#   become: yes
+
+
 ---
-# Tasks for Nginx installation and setup
-- name: Install Nginx
-  apt:
-    name: nginx
-    state: present
-  become: yes
+# Webserver (Nginx) Configuration Role
+- name: Create nginx directory
+  file:
+    path: "{{ app_nginx_dir }}"
+    state: directory
+    mode: '0755'
 
-- name: Obtain Let's Encrypt certificate
-  command: >
-    certbot certonly --nginx -n --agree-tos
-    --email admin@example.com
-    -d example.com -d www.example.com
-  become: yes
-  args:
-    creates: /etc/letsencrypt/live/lastdance.com/fullchain.pem
-
-
-- name: Ensure Nginx is running
-  service:
-    name: nginx
-    state: started
-    enabled: yes
-  become: yes
-
-- name: Deploy custom Nginx config for domain
+- name: Copy nginx configuration
   template:
-    src: default.conf.j2
-    dest: /etc/nginx/sites-available/default
-  notify: Reload Nginx
-  become: yes
+    src: nginx.conf.j2
+    dest: "{{ app_nginx_dir }}/nginx.conf"
+    mode: '0644'
+  notify: restart nginx
+
+- name: Configure UFW firewall
+  ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop:
+    - { rule: 'allow', port: '22', proto: 'tcp' }
+    - { rule: 'allow', port: '80', proto: 'tcp' }
+    - { rule: 'allow', port: '443', proto: 'tcp' }
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Display deployment information
+  debug:
+    msg:
+      - "=========================================="
+      - "WordPress deployment completed successfully!"
+      - "=========================================="
+      - "WordPress URL: https://{{ domain_name }}"
+      - "PHPMyAdmin URL: https://pma.{{ domain_name }}"
+      - "Admin User: {{ wordpress_admin_user }}"
+      - "Admin Password: {{ wordpress_admin_password }}"
+      - "=========================================="
+      - "Note: Using self-signed certificate."
+      - "Accept security warning in browser."
+      - "=========================================="
