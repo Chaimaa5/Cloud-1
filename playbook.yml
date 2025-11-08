@@ -17,7 +17,8 @@
   roles:
     # - docker
     # - mysql
-    - nginx
+    # - cloudfront 
+    # - nginx
     # - phpmyadmin
     # - wordpress
-    # - firewall
+    - firewall

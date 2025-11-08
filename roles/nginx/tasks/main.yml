@@ -65,7 +65,7 @@
   file:
     path: "{{ app_nginx_dir }}/certs/nginx-selfsigned.crt"
     mode: '0644'
-    
+
 - name: Copy nginx configuration
   template:
     src: nginx.conf.j2
@@ -82,6 +82,20 @@
     - { rule: 'allow', port: '22', proto: 'tcp' }
     - { rule: 'allow', port: '80', proto: 'tcp' }
     - { rule: 'allow', port: '443', proto: 'tcp' }
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Block direct phpMyAdmin access
+  ufw:
+    rule: deny
+    port: "{{ item }}"
+    proto: tcp
+    comment: "Block direct container access"
+  loop:
+    - '8080'  # phpMyAdmin port
+    - '9000'  # PHP-FPM port
+    - '3306'  # MySQL/MariaDB
+    - '2375'  # Docker daemon (unencrypted)
+    - '2376'  # Docker daemon (TLS)
   when: ansible_facts['os_family'] == "Debian"
 
 - name: Enable UFW
