@@ -83,7 +83,7 @@ if [ $? -eq 0 ]; then
     print_info "Deployment completed successfully!"
     print_info "=========================================="
     print_info "Access your WordPress site at: https://${DOMAIN_NAME}"
-    print_info "Access PHPMyAdmin at: https://pma.${DOMAIN_NAME}"
+    print_info "Access PHPMyAdmin at: https://${DOMAIN_NAME}"
     print_info "WordPress Admin User: admin"
     print_info "WordPress Admin Password: ${WP_ADMIN_PASSWORD}"
     print_info "=========================================="

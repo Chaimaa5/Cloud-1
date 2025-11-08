@@ -25,7 +25,6 @@ http {
     server {
         listen 443 ssl http2;
         server_name {{ domain_name }} www.{{ domain_name }};
-
         ssl_certificate /etc/nginx/certs/nginx-selfsigned.crt;
         ssl_certificate_key /etc/nginx/certs/nginx-selfsigned.key;
         ssl_protocols TLSv1.2 TLSv1.3;
@@ -46,28 +45,28 @@ http {
             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
             fastcgi_param PATH_INFO $fastcgi_path_info;
         }
-
-        location ~ /\.ht {
-            deny all;
-        }
-    }
-
-    # PHPMyAdmin site
-    server {
-        listen 443 ssl http2;
-        server_name pma.{{ domain_name }};
-
-        ssl_certificate /etc/nginx/certs/nginx-selfsigned.crt;
-        ssl_certificate_key /etc/nginx/certs/nginx-selfsigned.key;
-        ssl_protocols TLSv1.2 TLSv1.3;
-        ssl_ciphers HIGH:!aNULL:!MD5;
-
-        location / {
+         # phpMyAdmin location (MUST be before PHP location)
+        location ^~ /phpmyadmin {
+            # Handle base path
+            rewrite ^/phpmyadmin$ /phpmyadmin/ permanent;
+            
+            # Remove prefix and forward
+            rewrite ^/phpmyadmin/(.*)$ /$1 break;
+            
             proxy_pass http://phpmyadmin;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
+            
+            # Handle redirects
+            proxy_redirect / /phpmyadmin/;
+            proxy_redirect http://phpmyadmin/ /phpmyadmin/;
+        }
+        location ~ /\.ht {
+            deny all;
         }
     }
+
+    
 }

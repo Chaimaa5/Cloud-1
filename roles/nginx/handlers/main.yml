@@ -2,3 +2,14 @@
 - name: restart nginx
   shell: docker restart nginx
   ignore_errors: yes
+
+- name: Reload nginx to apply new configuration
+  shell: docker exec nginx nginx -s reload
+  ignore_errors: yes
+
+
+- name: restart wordpress
+  shell: docker restart wordpress
+
+- name: restart phpmyadmin
+  shell: docker restart phpmyadmin

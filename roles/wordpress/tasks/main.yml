@@ -145,3 +145,5 @@
 - name: Display WordPress installation status
   debug:
     msg: "WordPress installation: {{ final_check.stdout }}"
+
+

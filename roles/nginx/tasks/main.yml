@@ -39,6 +39,33 @@
     state: directory
     mode: '0755'
 
+- name: Create nginx directory for certs
+  file:
+    path: "{{ app_nginx_dir }}/certs"
+    state: directory
+    mode: '0755'
+
+- name: Generate private key for self-signed certificate
+  openssl_privatekey:
+    path: "{{ app_nginx_dir }}/certs/nginx-selfsigned.key"
+    size: 2048
+    mode: '0600'
+
+- name: Generate self-signed SSL certificate with OpenSSL
+  shell: |
+    openssl req -new -x509 -key {{ app_nginx_dir }}/certs/nginx-selfsigned.key \
+      -out {{ app_nginx_dir }}/certs/nginx-selfsigned.crt \
+      -days 365 \
+      -subj "/C=US/ST=State/L=City/O=Organization/CN={{ domain_name }}" \
+      -addext "subjectAltName=DNS:{{ domain_name }},DNS:www.{{ domain_name }},DNS:pma.{{ domain_name }}"
+  args:
+    creates: "{{ app_nginx_dir }}/certs/nginx-selfsigned.crt"
+
+- name: Set correct permissions on certificate
+  file:
+    path: "{{ app_nginx_dir }}/certs/nginx-selfsigned.crt"
+    mode: '0644'
+    
 - name: Copy nginx configuration
   template:
     src: nginx.conf.j2
@@ -69,10 +96,14 @@
       - "WordPress deployment completed successfully!"
       - "=========================================="
       - "WordPress URL: https://{{ domain_name }}"
-      - "PHPMyAdmin URL: https://pma.{{ domain_name }}"
+      - "PHPMyAdmin URL: https://{{ domain_name }}/phpmyadmin"
       - "Admin User: {{ wordpress_admin_user }}"
       - "Admin Password: {{ wordpress_admin_password }}"
       - "=========================================="
       - "Note: Using self-signed certificate."
       - "Accept security warning in browser."
       - "=========================================="
+  
+
+
+  
