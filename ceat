@@ -1,2 +1,0 @@
-\ aws ec2 create-key-pair \  --key-name ansible-key \                            --query "KeyMaterial" \
-  --output text > ~/.ssh/ansible-key.pem

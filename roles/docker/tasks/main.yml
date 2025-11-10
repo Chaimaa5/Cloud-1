@@ -1,5 +1,4 @@
 ---
-# Docker Installation Role
 - name: Wait for system to be ready
   wait_for_connection:
     timeout: 60

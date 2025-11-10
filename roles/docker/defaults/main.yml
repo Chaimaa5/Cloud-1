@@ -1,3 +1,2 @@
 ---
-# Default variables for Docker role
 docker_compose_version: "2.20.0"

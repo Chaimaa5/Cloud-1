@@ -1,4 +1,3 @@
-# Group variables for WordPress servers
 ---
 # Domain Configuration
 domain_name: "{{ lookup('env', 'DOMAIN_NAME') | default('localhost', true) }}"

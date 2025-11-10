@@ -28,6 +28,11 @@
     dest: "{{ app_base_dir }}/docker-compose.yml"
     mode: '0644'
 
+- name: Check if docker-compose.yml exists
+  stat:
+    path: "{{ app_base_dir }}/docker-compose.yml"
+  register: compose_file
+  
 - name: Stop existing containers
   shell: docker-compose down --remove-orphans
   args:

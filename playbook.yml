@@ -15,10 +15,8 @@
     wordpress_admin_email: "{{ lookup('env', 'WP_ADMIN_EMAIL') | default('admin@example.com', true) }}"
     
   roles:
-    # - docker
-    # - mysql
-    # - cloudfront 
-    # - nginx
-    # - phpmyadmin
-    # - wordpress
-    - firewall
+    - docker
+    - mysql
+    - nginx
+    - wordpress
+    # - firewall

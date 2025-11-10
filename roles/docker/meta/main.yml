@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  author: Your Name
+  author: Chaimaa
   description: Install Docker and Docker Compose
   license: MIT
   min_ansible_version: 2.9
